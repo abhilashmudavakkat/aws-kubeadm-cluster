@@ -1,0 +1,5 @@
+terraform/.terraform/
+terraform/key*
+terraform/terraform.tfstate*
+terraform/terraform.tfstate.backup
+ansible/key*

@@ -1,0 +1,23 @@
+---
+
+
+kernel_modules:
+  - "overlay"
+  - "br_netfilter"
+
+kernel_params:
+  - "net.bridge.bridge-nf-call-iptables"
+  - "net.bridge.bridge-nf-call-ip6tables"
+  - "net.ipv4.ip_forward"
+
+packages:
+  container_runtime: "containerd"
+  kubernetes_dependencies:
+    - "apt-transport-https"
+    - "curl"
+    - "ca-certificates"
+    - "gpg"
+
+
+
+

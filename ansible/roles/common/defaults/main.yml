@@ -1,0 +1,4 @@
+---
+# To facilitate k8s version override in playbook
+
+k8s_version: "v1.30"

@@ -1,0 +1,4 @@
+---
+# To facilitate CIDR override in playbook 
+
+pod_network_cidr: "192.20.0.0/16"

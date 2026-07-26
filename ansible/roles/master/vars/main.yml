@@ -1,0 +1,11 @@
+---
+
+packages:
+  kubernetes_components:
+    - "kubelet"
+    - "kubeadm"
+    - "kubectl"
+
+
+
+

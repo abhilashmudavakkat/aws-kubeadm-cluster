@@ -1,0 +1,112 @@
+---
+
+################################
+#PLAY-1 - Describe Ec2 Instances
+################################
+
+- name: "Describing Ec2 Instances Provisioned for the Cluster"
+  hosts: localhost
+  become: true
+  vars_files:
+    - variables.yaml
+
+  tasks:
+    
+    - name: "Installing {{ packages }}"
+      yum:
+        name: "{{ packages }}"
+        state: present
+
+    - name: "Installing Python Modules: {{ python_modules }}"
+      pip:
+        name: "{{ python_modules }}"
+
+    - name: "Gather Information About All Nodes in the Cluster"
+      amazon.aws.ec2_instance_info:
+        region: "{{ aws_region }}"
+        filters:
+          instance-state-name: running
+          "tag:Name": "{{ item }}"
+          "tag:Project": "{{ project_name }}"
+          "tag:Environment": "{{ project_environment }}"
+
+      loop: "{{ instance_names }}"
+      register: node_info
+  
+
+
+####################################
+#PLAY-2 - Dynamic Inventory Creation
+####################################
+
+
+- name: "Create a Dynamic Inventory of Nodes"
+  hosts: localhost
+  become: false
+  vars_files:
+    - variables.yaml
+  
+  tasks:
+    
+    - name: "Add Hosts to Inventory"
+      add_host:
+        groups: "{{ item.instances[0].tags.Role }}"
+        name: "{{ item.instances[0].tags.Name }}"
+        node_hostname: "{{ item.instances[0].tags.Hostname }}"
+        ansible_host: "{{ item.instances[0].public_ip_address }}"
+        ansible_user: "{{ node_user }}"
+        ansible_ssh_private_key_file: "./key"
+        ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+      loop: "{{ node_info.results }}"
+
+
+
+##############################################
+#PLAY-3 - Prepare Nodes for K8s Installation
+##############################################
+
+
+- name: "Configure All Nodes in the Kubernetes Cluster"
+  hosts: all
+  become: true
+  roles:
+    - common
+
+
+##############################################
+#PLAY-4 - Master Node Setup Using Kubeadm
+##############################################
+
+- name: "Setting up Kubernetes Master Node/Control Plane using Kubeadm"
+  hosts: master
+  become: true
+  roles:
+    - master
+
+
+##############################################
+#PLAY-5 - Worker Nodes Setup Using Kubeadm
+##############################################
+
+- name: "Setting up Kubernetes Worker Nodes using Kubeadm"
+  hosts: worker
+  become: true
+  roles:
+    - worker
+
+
+##############################################
+#PLAY-6 - Display Public IP of Cluster Nodes
+##############################################
+   
+
+- name: "Display Public IP of All Nodes in the Cluster"
+  hosts: localhost
+  
+  tasks:
+
+    - name: "Display Node IPs"
+      debug:
+        msg: "{{ item.instances[0].tags.Name }} = {{ item.instances[0].public_ip_address }}"
+      loop: "{{ node_info.results }}"
+  

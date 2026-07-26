@@ -1,0 +1,21 @@
+---
+
+aws_region: "ap-south-1"
+
+project_name: kubeadm
+project_environment: test
+instance_names:
+  - "k8s-master"
+  - "k8s-worker1"
+  - "k8s-worker2"
+
+
+python_modules:
+  - "boto3"
+  - "botocore"
+
+packages:
+  - "python3-pip"
+
+node_user: "ubuntu"
+

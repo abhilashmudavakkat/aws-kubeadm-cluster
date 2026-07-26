@@ -1,0 +1,7 @@
+---
+
+- name: "Containerd Restart"
+  service:
+    name: "containerd"
+    state: restarted
+    enabled: true

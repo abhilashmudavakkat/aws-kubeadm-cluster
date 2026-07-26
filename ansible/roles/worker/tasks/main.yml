@@ -1,0 +1,17 @@
+---
+
+- name: "Install {{ packages.kubernetes_components }} "
+  apt:
+    name: "{{ packages.kubernetes_components }}"
+    state: present
+
+- name: "Enable Kubelet service"
+  service:
+    name: kubelet
+    enabled: yes
+
+
+- name: "Join {{ inventory_hostname }} to Kubernetes Cluster"
+  command: "{{ hostvars[groups['master'][0]].join_command }}"
+  args:
+    creates: /etc/kubernetes/kubelet.conf

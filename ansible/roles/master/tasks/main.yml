@@ -1,0 +1,59 @@
+---
+
+
+- name: "Install {{ packages.kubernetes_components }} "
+  apt:
+    name: "{{ packages.kubernetes_components }}"
+    state: present
+
+
+- name: "Enable Kubelet Service"
+  service:
+    name: kubelet
+    enabled: yes
+
+
+- name: "Initialize Kubernetes Cluster"
+  command: "kubeadm init --pod-network-cidr={{ pod_network_cidr }}"
+  args:
+    creates: /etc/kubernetes/admin.conf
+
+
+- name: "Create Directory for Kubeconfig File"
+  file:
+    path: "/home/{{ ansible_user }}/.kube"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
+
+- name: "Copy Kube Config File to {{ ansible_user }} User Home Directory"
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "/home/{{ ansible_user }}/.kube/config"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    remote_src: true
+
+
+- name: "Update Default Flannel Manifest with Pod Network CIDR"
+  template:
+    src: kube-flannel.yml.tmpl
+    dest: /tmp/kube-flannel.yml
+  register: flannel_config
+
+
+- name: "Install Flannel Networking Plugin"
+  become: false
+  command: kubectl apply -f /tmp/kube-flannel.yml
+  when: flannel_config.changed
+
+
+- name: "Register Join Token Command to a Variable"
+  command: kubeadm token create --print-join-command
+  register: reg_command
+
+
+- name: "Set join Command as a Fact for {{ inventory_hostname }}"
+  set_fact:
+    join_command: "{{ reg_command.stdout }}"
